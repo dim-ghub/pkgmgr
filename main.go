@@ -15,6 +15,7 @@ func init() {
 		&Pacman{},
 		&AUR{},
 		&Flatpak{},
+		&PluginManager{},
 	} {
 		if m.Exists() {
 			managers = append(managers, m)
@@ -34,7 +35,7 @@ Commands:
 If no command is given, runs update (pkg = pkg update).
 If command is not recognized, treats it as a search (pkg firefox = pkg search firefox).
 
-Sources: pacman, aur, flatpak
+Sources: pacman, aur, flatpak, gh (github plugins)
 Examples:
   pkg                              # update all
   pkg firefox                      # search
@@ -228,7 +229,7 @@ func cmdRemove(name string, extraArgs ...string) {
 				return
 			}
 		}
-		fmt.Fprintf(os.Stderr, "Unknown source: %s (use: pacman, aur, flatpak)\n", src)
+		fmt.Fprintf(os.Stderr, "Unknown source: %s\n", src)
 		os.Exit(1)
 	}
 
