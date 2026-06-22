@@ -31,8 +31,11 @@ pkg install gh/dim-ghub/caelestia-cli-git
 
 Each plugin specifies a GitHub repo, clone destination, and the shell commands
 to install/update. The manager clones the repo if needed, pulls updates, and
-runs the steps. Install status is determined by whether the clone directory
-exists on disk.
+runs the steps. Install status checks the clone directory first, then falls
+back to an optional `checkBin` binary path (used for self-detection).
+
+pkgmgr can self-update via `pkg update` (the binary includes itself in the
+default plugin config):
 
 ## Install on Arch Linux
 

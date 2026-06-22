@@ -20,6 +20,7 @@ type ghPkg struct {
 	Repo        string   `json:"repo"`
 	Description string   `json:"description"`
 	CloneDir    string   `json:"cloneDir"`
+	CheckBin    string   `json:"checkBin"`
 	Install     []string `json:"install"`
 	Update      []string `json:"update"`
 }
@@ -75,6 +76,18 @@ func (pm *PluginManager) loadConfig() error {
 	return nil
 }
 
+func pkgInstalled(pkg ghPkg) bool {
+	if _, err := os.Stat(expandPath(pkg.CloneDir)); err == nil {
+		return true
+	}
+	if pkg.CheckBin != "" {
+		if _, err := exec.LookPath(pkg.CheckBin); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
 func expandPath(path string) string {
 	if strings.HasPrefix(path, "~") {
 		home, _ := os.UserHomeDir()
@@ -107,14 +120,14 @@ func (pm *PluginManager) Search(query string) ([]Package, error) {
 				!strings.Contains(strings.ToLower(pkg.Description), q) {
 				continue
 			}
-			_, err := os.Stat(expandPath(pkg.CloneDir))
+			installed := pkgInstalled(pkg)
 			pkgs = append(pkgs, Package{
 				Name:        name,
 				Version:     "git",
 				Description: pkg.Description,
 				Source:      "gh",
 				Repo:        user,
-				Installed:   err == nil,
+				Installed:   installed,
 			})
 		}
 	}
@@ -151,21 +164,28 @@ func (pm *PluginManager) Install(pkg string, extraArgs ...string) error {
 	return pm.installPkg(user, name)
 }
 
-func (pm *PluginManager) installPkg(user, name string) error {
+func (pm *PluginManager) clonePkg(user, name string) error {
 	def := pm.config.Github[user][name]
 	cloneDir := expandPath(def.CloneDir)
 	repoDir := filepath.Dir(cloneDir)
 
+	if err := os.MkdirAll(repoDir, 0755); err != nil {
+		return fmt.Errorf("creating directory %s: %w", repoDir, err)
+	}
+	repoURL := fmt.Sprintf("https://github.com/%s.git", def.Repo)
+	fmt.Printf("Cloning %s into %s...\n", repoURL, cloneDir)
+	cmd := exec.Command("git", "clone", repoURL, cloneDir)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func (pm *PluginManager) installPkg(user, name string) error {
+	def := pm.config.Github[user][name]
+	cloneDir := expandPath(def.CloneDir)
+
 	if _, err := os.Stat(cloneDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(repoDir, 0755); err != nil {
-			return fmt.Errorf("creating directory %s: %w", repoDir, err)
-		}
-		repoURL := fmt.Sprintf("https://github.com/%s.git", def.Repo)
-		fmt.Printf("Cloning %s into %s...\n", repoURL, cloneDir)
-		cmd := exec.Command("git", "clone", repoURL, cloneDir)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
+		if err := pm.clonePkg(user, name); err != nil {
 			return fmt.Errorf("cloning repo: %w", err)
 		}
 	} else {
@@ -193,8 +213,14 @@ func (pm *PluginManager) Update(extraArgs ...string) error {
 			cloneDir := expandPath(def.CloneDir)
 
 			if _, err := os.Stat(cloneDir); os.IsNotExist(err) {
-				fmt.Printf("Skipping %s/%s (not cloned yet, use install first)\n", user, name)
-				continue
+				if !pkgInstalled(def) {
+					fmt.Printf("Skipping %s/%s (not cloned yet, use install first)\n", user, name)
+					continue
+				}
+				if err := pm.clonePkg(user, name); err != nil {
+					fmt.Fprintf(os.Stderr, "error cloning %s: %v\n", name, err)
+					continue
+				}
 			}
 
 			fmt.Printf("\n=== Updating %s/%s ===\n", user, name)

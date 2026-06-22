@@ -13,6 +13,20 @@
           "scripts/update.sh"
         ]
       },
+      "pkgmgr": {
+        "repo": "dim-ghub/pkgmgr",
+        "description": "Unified CLI wrapper for pacman, AUR, Flatpak",
+        "cloneDir": "~/.cache/pkgmgr/dim-ghub/pkgmgr",
+        "checkBin": "pkg",
+        "install": [
+          "go build -o pkg .",
+          "sudo cp pkg /usr/bin/pkg"
+        ],
+        "update": [
+          "go build -o pkg .",
+          "sudo cp pkg /usr/bin/pkg"
+        ]
+      },
       "caelestia-cli-git": {
         "repo": "dim-ghub/caelestia-cli",
         "description": "Main control script for the Caelestia dotfiles",
