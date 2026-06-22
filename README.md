@@ -15,7 +15,24 @@ pkg install aur/foo --noconfirm  install with flags passed through
 pkg remove pacman/foo            remove (source required)
 ```
 
-Sources: `pacman`, `aur`, `flatpak` (e.g. `pkg install flatpak/org.mozilla.firefox --user`)
+Sources: `pacman`, `aur`, `flatpak`, `gh` (e.g. `pkg install flatpak/org.mozilla.firefox --user`)
+
+## GitHub plugins (`gh`)
+
+Packages hosted on GitHub can be defined in the embedded default config or
+overridden in `~/.config/pkgmgr/plugins.json`. The binary ships with package
+definitions for [dim-ghub](https://github.com/dim-ghub)'s forks:
+
+```
+pkg search caelestia
+pkg install gh/dim-ghub/caelestia-shell-git
+pkg install gh/dim-ghub/caelestia-cli-git
+```
+
+Each plugin specifies a GitHub repo, clone destination, and the shell commands
+to install/update. The manager clones the repo if needed, pulls updates, and
+runs the steps. Install status is determined by whether the clone directory
+exists on disk.
 
 ## Install on Arch Linux
 
