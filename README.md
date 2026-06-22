@@ -17,7 +17,17 @@ pkg remove pacman/foo            remove (source required)
 
 Sources: `pacman`, `aur`, `flatpak` (e.g. `pkg install flatpak/org.mozilla.firefox --user`)
 
-## Build
+## Install on Arch Linux
+
+```
+git clone https://github.com/dim-ghub/pkgmgr.git
+cd pkgmgr
+makepkg -si
+```
+
+This installs the `pkg` binary to `/usr/bin/pkg`.
+
+## Build from source
 
 ```
 go build -o pkg .
