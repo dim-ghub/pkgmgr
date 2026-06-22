@@ -1,0 +1,37 @@
+{
+  "github": {
+    "dim-ghub": {
+      "caelestia-shell-git": {
+        "repo": "dim-ghub/caelestia-shell",
+        "description": "Caelestia desktop shell fork with extra features (launchers, wallpapers, games, dashboard)",
+        "cloneDir": "$XDG_CONFIG_HOME/quickshell/caelestia",
+        "install": [
+          "sudo pacman -Rdd caelestia-shell caelestia-shell-git 2>/dev/null; true",
+          "scripts/install.sh"
+        ],
+        "update": [
+          "scripts/update.sh"
+        ]
+      },
+      "caelestia-cli-git": {
+        "repo": "dim-ghub/caelestia-cli",
+        "description": "Main control script for the Caelestia dotfiles",
+        "cloneDir": "~/.cache/pkgmgr/dim-ghub/caelestia-cli",
+        "install": [
+          "sudo pacman -Rdd caelestia-cli caelestia-cli-git 2>/dev/null; true",
+          "python -m build --wheel",
+          "sudo python -m installer --overwrite-existing dist/*.whl",
+          "sudo mkdir -p /usr/share/fish/vendor_completions.d",
+          "sudo cp completions/caelestia.fish /usr/share/fish/vendor_completions.d/caelestia.fish"
+        ],
+        "update": [
+          "git pull --rebase",
+          "rm -rf dist",
+          "python -m build --wheel",
+          "sudo python -m installer --overwrite-existing dist/*.whl",
+          "sudo cp completions/caelestia.fish /usr/share/fish/vendor_completions.d/caelestia.fish"
+        ]
+      }
+    }
+  }
+}

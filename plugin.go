@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	_ "embed"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,7 +11,10 @@ import (
 	"sync"
 )
 
-const pluginConfigPath = "~/.config/pkgmgr/plugins.json"
+//go:embed plugins_default.json
+var defaultConfig []byte
+
+const userConfigPath = "~/.config/pkgmgr/plugins.json"
 
 type ghPkg struct {
 	Repo        string   `json:"repo"`
@@ -33,10 +37,7 @@ type PluginManager struct {
 func (pm *PluginManager) Name() string { return "gh" }
 
 func (pm *PluginManager) Exists() bool {
-	if _, err := exec.LookPath("git"); err != nil {
-		return false
-	}
-	_, err := os.Stat(expandPath(pluginConfigPath))
+	_, err := exec.LookPath("git")
 	return err == nil
 }
 
@@ -46,14 +47,30 @@ func (pm *PluginManager) loadConfig() error {
 	if pm.loaded {
 		return nil
 	}
-	path := expandPath(pluginConfigPath)
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("reading %s: %w", path, err)
+
+	if err := json.Unmarshal(defaultConfig, &pm.config); err != nil {
+		return fmt.Errorf("parsing embedded config: %w", err)
 	}
-	if err := json.Unmarshal(data, &pm.config); err != nil {
-		return fmt.Errorf("parsing %s: %w", path, err)
+
+	userPath := expandPath(userConfigPath)
+	if data, err := os.ReadFile(userPath); err == nil {
+		var userCfg pluginConfig
+		if err := json.Unmarshal(data, &userCfg); err != nil {
+			return fmt.Errorf("parsing %s: %w", userPath, err)
+		}
+		for user, pkgs := range userCfg.Github {
+			if pm.config.Github == nil {
+				pm.config.Github = make(map[string]map[string]ghPkg)
+			}
+			if _, ok := pm.config.Github[user]; !ok {
+				pm.config.Github[user] = make(map[string]ghPkg)
+			}
+			for name, pkg := range pkgs {
+				pm.config.Github[user][name] = pkg
+			}
+		}
 	}
+
 	pm.loaded = true
 	return nil
 }
