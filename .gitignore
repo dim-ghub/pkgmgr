@@ -1,1 +1,22 @@
+# build artifact
 pkg
+pkgmgr
+
+# makepkg
+src/
+pkg/
+*.pkg.tar.zst
+*.pkg.tar.xz
+
+# go
+*.exe
+*.test
+*.out
+
+# editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.orig
